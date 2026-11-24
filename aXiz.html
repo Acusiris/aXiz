@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>aXiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400&family=Jost:wght@200;300&family=Klee+One:wght@300&family=Noto+Sans+SC:wght@200;300&family=Oxanium:wght@300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="cv"></canvas>
+<div id="veil" class="veil"></div>
+<div id="cut" class="cut"></div>
+
+<!-- ============ 全局水印（右下角，低透明度） ============ -->
+<div id="wmAXiz" class="wm-aXiz">aXiz</div>
+
+<!-- ============ 第二关广场：中心透明/边缘全黑椭圆蒙版 + 边缘模糊 ============ -->
+<div id="plazaMask" class="plaza-mask hidden"></div>
+
+<!-- ============ 主页面图标：随时回到主页 ============ -->
+<button id="btnHome" class="home-icon hidden" title="返回主页 · HOME">◇</button>
+
+<!-- ============ 主菜单（开始界面 · 分层动画） ============ -->
+<div id="scrStart" class="screen start-screen">
+
+  <!-- 背景层：极缓慢流转的抽象光效空间 -->
+  <canvas id="startBg" class="start-bg"></canvas>
+
+  <!-- 核心视觉层：人物线条从模糊苏醒（canvas 绘制） -->
+  <canvas id="startHero" class="start-hero"></canvas>
+
+  <!-- 粒子层：极细极淡的缓慢飘落 -->
+  <canvas id="startParticles" class="start-particles"></canvas>
+
+  <!-- UI 菜单层：错峰浮现（4 项） -->
+  <div class="start-ui f-ui">
+    <div class="start-title f-tech"><span id="startTitleCn">aXiz</span></div>
+    <p class="start-sub">一面碎裂的镜子，一条回家的路 · A FABLE OF WHAT WE LISTEN TO</p>
+    <nav class="menu-nav start-nav">
+      <button id="btnNew" class="menu-item start-item">开始游戏 · START</button>
+      <button id="btnContinue" class="menu-item start-item">继续游戏 · CONTINUE</button>
+      <button id="btnGallery" class="menu-item start-item">成就库 · ARCHIVE</button>
+      <button id="btnHelp" class="menu-item start-item">设置 · SETTINGS</button>
+    </nav>
+  </div>
+
+  <!-- 成就库面板（点击成就库展开） -->
+  <div id="startArchive" class="start-archive hidden f-ui">
+    <div class="f-tech help-title">成就库 · ARCHIVE <span id="menuAchCount">0</span></div>
+    <div id="menuAchList" class="ach-list f-ui"></div>
+    <button id="btnArchiveClose" class="menu-item small">关闭 · CLOSE</button>
+  </div>
+</div>
+
+<!-- ============ 叙事 ============ -->
+<div id="scrNarr" class="screen hidden">
+  <div class="narr">
+    <div id="narrStep" class="narr-step f-ui">CHAPTER 00</div>
+    <h2 id="narrTitle" class="f-tech narr-title"></h2>
+    <div id="narrLines" class="f-narr"></div>
+    <div id="narrStats" class="narr-stats f-ui hidden"></div>
+    <button id="btnNarr" class="menu-item small">继续 · CONTINUE</button>
+  </div>
+</div>
+
+<!-- ============ HUD ============ -->
+<div id="hud" class="hud hidden">
+  <div id="hudStats" class="f-ui hud-stats"></div>
+  <div id="hudHint" class="f-ui hud-hint"></div>
+  <button id="btnPause" class="f-ui hud-pause">II</button>
+</div>
+
+<!-- ============ 场景 UI ============ -->
+<div id="uiA1" class="scene-ui hidden">
+  <div id="abilityPanel" class="panel f-ui"></div>
+  <div id="nearA1" class="near f-ui hidden"></div>
+  <button id="btnEye" class="eye f-tech hidden"><span class="eye-icon">◉</span> 传送之眼 · THE EYE</button>
+</div>
+
+<div id="uiA2" class="scene-ui hidden">
+  <div id="opinionPanel" class="panel f-ui"></div>
+  <div id="nearA2" class="near f-ui hidden"></div>
+</div>
+
+<div id="uiB2" class="scene-ui hidden">
+  <div id="b2Timer" class="b2-timer f-ui">03:00</div>
+  <div id="b2Progress" class="f-ui b2-progress"></div>
+  <div id="nearB2" class="near f-ui hidden"></div>
+</div>
+
+<div id="toasts" class="toasts"></div>
+
+<!-- ============ 开发者模式：全局跳关按钮 ============ -->
+<button id="btnDevNext" class="dev-next hidden" title="下一关 · NEXT CHAPTER">▶</button>
+
+<!-- ============ 成就详情（快照 + 失败文字） ============ -->
+<div id="achDetail" class="screen hidden">
+  <div class="help ach-detail">
+    <div class="f-tech help-title" id="achDetailTitle">成就</div>
+    <div id="achDetailMeta" class="f-ui ach-detail-meta"></div>
+    <img id="achDetailShot" class="ach-detail-shot hidden" alt="结局快照">
+    <p id="achDetailText" class="f-narr ach-detail-text"></p>
+    <button id="btnAchDetailClose" class="menu-item small">退出查看 · CLOSE</button>
+  </div>
+</div>
+
+<!-- ============ 暂停 ============ -->
+<div id="scrPause" class="screen hidden">
+  <div class="pause f-ui">
+    <div class="f-tech pause-title">暂停 · PAUSED</div>
+    <button id="btnResume" class="menu-item">继续 · RESUME</button>
+    <button id="btnRestart" class="menu-item">重来 · RESTART</button>
+    <button id="btnHelp2" class="menu-item">设置 · SETTINGS</button>
+  </div>
+</div>
+
+<!-- ============ 设置 ============ -->
+<div id="scrHelp" class="screen hidden">
+  <div class="help">
+    <div class="f-tech help-title">设置 · SETTINGS</div>
+    <div class="help-grid f-ui">
+      <div><b>WASD / 方向键</b><span>移动 MOVE</span></div>
+      <div><b>E / 空格</b><span>交互 INTERACT</span></div>
+      <div><b>ESC</b><span>暂停 PAUSE</span></div>
+      <div><b>传送之眼 THE EYE</b><span>能力达标后出现</span></div>
+    </div>
+    <p class="help-note f-narr">你只能看见身边的人。你收集什么，镜像就回赠你更多什么。任何一类都不会消失——总还有回头路。</p>
+    <button id="btnLang" class="menu-item small">语言 LANG : 中文</button>
+    <button id="btnSound" class="menu-item small">声音 SOUND : ON</button>
+    <div class="audio-ctl f-ui">
+      <div class="audio-row"><span class="audio-label">音乐 BGM</span>
+        <button id="btnBgmToggle" class="audio-toggle on">开</button>
+        <input id="bgmVol" type="range" min="0" max="100" value="100" class="vol-range">
+      </div>
+      <div class="audio-row"><span class="audio-label">音效 SFX</span>
+        <button id="btnSfxToggle" class="audio-toggle on">开</button>
+      </div>
+      <div class="audio-row"><span class="audio-label">增强氛围</span>
+        <button id="btnAmbient" class="audio-toggle">关</button>
+        <span class="audio-note">随 BGM 音波跳动</span>
+      </div>
+    </div>
+    <button id="btnDev" class="menu-item small">开发者模式 · DEV : OFF</button>
+    <button id="btnHelpClose" class="menu-item small">关闭 CLOSE</button>
+  </div>
+</div>
+
+<!-- ============ 结局 ============ -->
+<div id="scrEnd" class="screen hidden">
+  <div class="end">
+    <div id="endIcon" class="end-sigil f-tech">◇</div>
+    <h2 id="endTitle" class="f-tech end-title"></h2>
+    <p id="endDesc" class="f-narr"></p>
+    <p id="endQuote" class="f-narr quote"></p>
+    <div class="ach">
+      <div class="f-ui ach-head">成就库 · ARCHIVE <span id="achCount">0</span></div>
+      <div id="achList" class="ach-list f-ui"></div>
+    </div>
+    <div class="end-actions f-ui">
+      <button id="btnReplay" class="menu-item small">重新开始 · RESTART</button>
+      <button id="btnEndHome" class="menu-item small">返回主页 · HOME</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 信息图 ============ -->
+<div id="scrInfo" class="screen hidden">
+  <div class="info">
+    <h2 class="f-tech" style="font-family:Oxanium,Exo,sans-serif">信息茧房 · FORM &amp; BREAK</h2>
+    <canvas id="infoCv" width="900" height="520"></canvas>
+    <div class="info-legend f-ui">
+      <span><i class="lg lg-a"></i> 回响 ECHO</span>
+      <span><i class="lg lg-b"></i> 墙 WALL</span>
+      <span><i class="lg lg-c"></i> 破茧 BREAK</span>
+    </div>
+    <button id="btnInfoNext" class="menu-item small">返回 · RETURN</button>
+  </div>
+</div>
+
+<!-- ============ 触屏 ============ -->
+<div id="touch" class="hidden">
+  <div id="joystick" class="joystick"><div id="stick" class="stick"></div></div>
+  <button id="btnAct" class="btn-act f-ui">E</button>
+</div>
+
+<script src="bgm.js"></script>
+<script src="sfx.js"></script>
+<script src="story.js"></script>
+<script src="phaser.min.js"></script>
+<script src="fx.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
